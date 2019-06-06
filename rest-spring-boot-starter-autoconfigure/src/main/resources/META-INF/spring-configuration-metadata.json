@@ -1,0 +1,30 @@
+{
+  "hints":[{
+    "name":"response.handler.enabled",
+    "values":[{
+      "value":true,
+      "description":"启用，默认值"
+    },{
+      "value":false,
+      "description":"禁用"
+    }]
+  }],
+  "groups":[{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerAutoConfiguration",
+      "name": "response.handler",
+      "type": "cn.sunnymaple.rest.response.AppResponseHandlerAutoConfiguration"
+    }],
+  "properties":[
+    {
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerAutoConfiguration",
+      "name": "response.handler.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用统一格式的响应参数",
+      "defaultValue": true
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerAutoConfiguration",
+      "name": "response.handler.non-response-handler",
+      "type": "java.lang.String[]",
+      "description": "定义响应参数不封装成固定格式的接口"
+    }]
+}
