@@ -8,12 +8,25 @@
       "value":false,
       "description":"禁用"
     }]
+  },{
+    "name":"exception.handler.enabled",
+    "values":[{
+      "value":true,
+      "description":"启用，默认值"
+    },{
+      "value":false,
+      "description":"禁用"
+    }]
   }],
   "groups":[{
       "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
       "name": "response.handler",
       "type": "cn.sunnymaple.rest.response.AppResponseHandlerProperties"
-    }],
+    },{
+    "sourceType": "cn.sunnymaple.rest.exception.AppExceptionHandlerProperties",
+    "name": "exception.handler",
+    "type": "cn.sunnymaple.rest.exception.AppExceptionHandlerProperties"
+  }],
   "properties":[
     {
       "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
@@ -26,5 +39,11 @@
       "name": "response.handler.non-response-handler",
       "type": "java.lang.String[]",
       "description": "定义响应参数不封装成固定格式的接口"
+    },{
+      "sourceType": "cn.sunnymaple.rest.exception.AppExceptionHandlerProperties",
+      "name": "exception.handler.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用异常处理",
+      "defaultValue": true
     }]
 }

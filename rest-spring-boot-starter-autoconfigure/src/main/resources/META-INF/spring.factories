@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  cn.sunnymaple.rest.response.AppResponseHandlerAutoConfiguration
+  cn.sunnymaple.rest.response.AppResponseHandlerAutoConfiguration,\
+  cn.sunnymaple.rest.exception.AppExceptionHandlerAutoConfiguration

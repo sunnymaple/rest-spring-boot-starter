@@ -1,7 +1,10 @@
 package cn.sunnymaple.rest.response;
 
 import lombok.Data;
+import org.springframework.beans.BeansException;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 /**
  * AppResponseHandler配置文件
@@ -10,7 +13,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "response.handler")
 @Data
-public class AppResponseHandlerProperties {
+public class AppResponseHandlerProperties implements ApplicationContextAware {
+
+    private static AppResponseHandlerProperties appResponseHandlerProperties;
+
+    /**
+     * 获取实例
+     * @return
+     */
+    public static AppResponseHandlerProperties getInstance(){
+        return appResponseHandlerProperties;
+    }
+
     /**
      * 是否启用AppResponseHandler处理器
      * true 启用
@@ -26,4 +40,8 @@ public class AppResponseHandlerProperties {
      */
     private String[] nonResponseHandler;
 
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        appResponseHandlerProperties = applicationContext.getBean(AppResponseHandlerProperties.class);
+    }
 }

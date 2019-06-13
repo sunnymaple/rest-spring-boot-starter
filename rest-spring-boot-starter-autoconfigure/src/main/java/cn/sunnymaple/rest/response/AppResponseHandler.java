@@ -82,9 +82,21 @@ public class AppResponseHandler implements ResponseBodyAdvice {
     public Object beforeBodyWrite(Object o, MethodParameter methodParameter, MediaType mediaType, Class aClass, ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse) {
         Object result = null;
         try {
-            //封装统一格式的响应参数
-            result = restResult(o,mediaType,serverHttpRequest,serverHttpResponse,aClass);
-        } catch (IOException e) {
+            //对异常进行处理
+            HttpServletRequest request = ((ServletServerHttpRequest) serverHttpRequest).getServletRequest();
+            Object isException = request.getAttribute("isException");
+            if (!Utils.isEmpty(isException) && Objects.equals(isException.toString(),"1")){
+                //接口异常
+                String message = request.getAttribute("message").toString();
+                Integer status = Integer.parseInt(request.getAttribute("status").toString());
+                result = writeValueAsString(new RestResult(status,message));
+            }else {
+                //封装统一格式的响应参数
+                result = restResult(o,mediaType,serverHttpRequest,serverHttpResponse,aClass);
+            }
+        } catch (Exception e) {
+            HttpStatusEnum statusEnum = HttpStatusEnum.INTERNAL_SERVER_ERROR;
+            result = new RestResult(statusEnum.getStatus(),statusEnum.getMessage());
             log.info("创建统一格式的响应数据异常！",e);
         }
         return result;
