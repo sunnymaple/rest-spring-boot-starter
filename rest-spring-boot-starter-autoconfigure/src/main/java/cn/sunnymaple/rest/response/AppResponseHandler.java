@@ -89,7 +89,7 @@ public class AppResponseHandler implements ResponseBodyAdvice {
                 //接口异常
                 String message = request.getAttribute("message").toString();
                 Integer status = Integer.parseInt(request.getAttribute("status").toString());
-                result = writeValueAsString(new RestResult(status,message));
+                result = new RestResult(status,message);
             }else {
                 //封装统一格式的响应参数
                 result = restResult(o,mediaType,serverHttpRequest,serverHttpResponse,aClass);
