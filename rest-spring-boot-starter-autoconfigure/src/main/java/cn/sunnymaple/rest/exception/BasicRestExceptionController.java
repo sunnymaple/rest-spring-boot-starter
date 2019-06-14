@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
  * 异常处理接口
  * @author wangzb
  * @date 2019/6/13 10:07
- * @company 矽甲（上海）信息科技有限公司
  */
 @Controller
 @RequestMapping(value = "/restException")
