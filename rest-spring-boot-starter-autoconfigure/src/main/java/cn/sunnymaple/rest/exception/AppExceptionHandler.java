@@ -2,6 +2,7 @@ package cn.sunnymaple.rest.exception;
 
 import cn.sunnymaple.rest.common.HttpStatusEnum;
 import cn.sunnymaple.rest.common.Utils;
+import cn.sunnymaple.rest.response.AppResponseHandlerProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.internal.engine.path.PathImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -190,6 +191,11 @@ public class AppExceptionHandler {
      * @return
      */
     private boolean isResponseBody(HandlerMethod handlerMethod){
+        //判断是否使用了responseHandler
+        AppResponseHandlerProperties properties = AppResponseHandlerProperties.getInstance();
+        if (Utils.isEmpty(properties) || !properties.isEnabled()){
+            return false;
+        }
         //接口方法
         Method method = handlerMethod.getMethod();
         //接口类
