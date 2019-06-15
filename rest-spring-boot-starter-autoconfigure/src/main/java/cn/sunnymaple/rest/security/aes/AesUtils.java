@@ -13,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Aes工具类
@@ -26,11 +27,6 @@ public class AesUtils {
     public static final String AES  =  "AES";
 
     /**
-     * 解码/编码格式
-     */
-    public static final String UTF_8 = "UTF-8";
-
-    /**
      * 获取一个指定长度的随机数密钥
      * @param secretKeyLength 密钥长度
      * @return
@@ -39,7 +35,7 @@ public class AesUtils {
     public static String getSecretKey(Integer secretKeyLength) throws NoSuchAlgorithmException {
         KeyGenerator keyGen = KeyGenerator.getInstance(AES);
         //获取当前时间戳
-        byte[] timestamp = String.valueOf(System.currentTimeMillis()).getBytes(StandardCharsets.UTF_8);
+        byte[] timestamp = UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8);
         //根据时间戳获取随机密钥
         SecureRandom secureRandom = new SecureRandom(timestamp);
         keyGen.init(secretKeyLength, secureRandom);
@@ -110,7 +106,7 @@ public class AesUtils {
         //获取密码器
         Cipher cipher = createCipher(Cipher.ENCRYPT_MODE,secretKey,algorithmPattern,paddingType,vector);
         //获取明文的字节数组(这里要设置为utf-8)不然内容中如果有中文和英文混合中文就会解密为乱码
-        byte [] byteEncode = plaintext.getBytes(UTF_8);
+        byte [] byteEncode = plaintext.getBytes(StandardCharsets.UTF_8);
         //根据密码器的初始化方式--加密：将数据加密
         byte [] byteAes = cipher.doFinal(byteEncode);
         //将加密后的数据转换为字符串
@@ -160,7 +156,7 @@ public class AesUtils {
         byte [] byteContent =  new BASE64Decoder().decodeBuffer(cipherText);
         //解密
         byte [] byteDecode = cipher.doFinal(byteContent);
-        return new String(byteDecode, UTF_8);
+        return new String(byteDecode, StandardCharsets.UTF_8);
     }
     /**
      * AES解密
