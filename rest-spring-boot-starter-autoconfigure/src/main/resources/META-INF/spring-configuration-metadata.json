@@ -17,6 +17,72 @@
       "value":false,
       "description":"禁用"
     }]
+  },{
+    "name":"security.enabled",
+    "values":[{
+      "value":true,
+      "description":"启用"
+    },{
+      "value":false,
+      "description":"禁用，默认值"
+    }]
+  },{
+    "name":"security.aes.secret-key-length",
+    "values":[{
+      "value":128,
+      "description":"密钥长度128位"
+    },{
+      "value":192,
+      "description":"密钥长度192位"
+    },{
+      "value":256,
+      "description":"密钥长度256位"
+    }]
+  },{
+    "name":"security.aes.algorithm-pattern",
+    "values":[{
+      "value":"ECB",
+      "description":"电子密码本（Electronic Code Book）,简称ECB"
+    },{
+      "value":"CBC",
+      "description":"加密块链（Cipher Block Chaining），简称CBC"
+    },{
+      "value":"CFB",
+      "description":"加密反馈（Cipher Feed Back）,简称CFB"
+    },{
+      "value":"CFB",
+      "description":"加密反馈（Cipher Feed Back）,简称CFB"
+    }]
+  },{
+    "name":"security.aes.padding-type",
+    "values":[{
+      "value":"PKCS5Padding",
+      "description":"PKCS5Padding"
+    },{
+      "value":"PKCS7Padding",
+      "description":"PKCS7Padding"
+    }]
+  },{
+    "name":"security.rsa.signature-enable",
+    "values":[{
+      "value":true,
+      "description":"启用，默认值"
+    },{
+      "value":false,
+      "description":"禁用"
+    }]
+  },{
+    "name":"security.rsa.signature-algorithm",
+    "values":[{
+      "value":"MD2withRSA",
+      "description":"MD2withRSA"
+    },{
+      "value":"MD5withRSA",
+      "description":"MD5withRSA"
+    },{
+      "value":"SHA1withRSA",
+      "description":"SHA1withRSA"
+    }]
   }],
   "groups":[{
       "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
@@ -26,6 +92,10 @@
     "sourceType": "cn.sunnymaple.rest.exception.AppExceptionHandlerProperties",
     "name": "exception.handler",
     "type": "cn.sunnymaple.rest.exception.AppExceptionHandlerProperties"
+  },{
+    "sourceType": "cn.sunnymaple.rest.security.property.SecurityProperties",
+    "name": "security",
+    "type": "cn.sunnymaple.rest.security.property.SecurityProperties"
   }],
   "properties":[
     {
@@ -45,5 +115,61 @@
       "type": "java.lang.Boolean",
       "description": "是否启用异常处理",
       "defaultValue": true
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
+      "name": "security.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用接口加密",
+      "defaultValue": false
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
+      "name": "security.exclude-path-patterns",
+      "type": "java.lang.String[]",
+      "description": "不参与接口参数加密的接口uri，多个已逗号隔开"
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
+      "name": "security.aes.secret-key-length",
+      "type": "java.lang.Integer",
+      "description": "AES密钥长度，单位：位",
+      "defaultValue":128
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
+      "name": "security.aes.algorithm-pattern",
+      "type": "java.lang.String",
+      "description": "AES算法模式",
+      "defaultValue":"ECB"
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
+      "name": "security.aes.padding-type",
+      "type": "java.lang.String",
+      "description": "AES填充方式",
+      "defaultValue":"PKCS5Padding"
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
+      "name": "security.rsa.signature-enable",
+      "type": "java.lang.Boolean",
+      "description": "是否开启RSA数字签名认证，开启需要传递参数sign",
+      "defaultValue":true
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
+      "name": "security.rsa.signature-algorithm",
+      "type": "java.lang.String",
+      "description": "当signatureEnable为true时，可以指定签名算法",
+      "defaultValue":"MD5withRSA"
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
+      "name": "security.rsa.client-public-key",
+      "type": "java.util.Map",
+      "description": "客户端公钥"
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
+      "name": "security.rsa.server-public-key",
+      "type": "java.lang.String",
+      "description": "服务端公钥"
+    },{
+      "sourceType": "cn.sunnymaple.rest.response.AppResponseHandlerProperties",
+      "name": "security.rsa.server-private-key",
+      "type": "java.lang.String",
+      "description": "服务端私钥"
     }]
 }

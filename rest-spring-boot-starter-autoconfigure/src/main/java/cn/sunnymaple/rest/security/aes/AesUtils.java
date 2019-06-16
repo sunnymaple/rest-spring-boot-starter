@@ -1,5 +1,6 @@
 package cn.sunnymaple.rest.security.aes;
 
+import cn.sunnymaple.rest.security.property.AesProperties;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
@@ -76,10 +77,11 @@ public class AesUtils {
         //1.构造密钥生成器，指定为AES算法,不区分大小写
         KeyGenerator keygen = KeyGenerator.getInstance(AES);
         //2.根据解密或者加密规则初始化密钥生成器
-        Integer secretKeyLength = secretKey.length() * 8;
+        byte[] secretKeyBites = Base64.getDecoder().decode(secretKey);
+        Integer secretKeyLength = secretKeyBites.length * 8;
         keygen.init(secretKeyLength);
         //3.根据字节数组生成AES密钥
-        SecretKey key = new SecretKeySpec(secretKey.getBytes(), AES);
+        SecretKey key = new SecretKeySpec(secretKeyBites, AES);
         //4.根据指定算法AES自成密码器
         Cipher cipher = Cipher.getInstance(AES + "/" + algorithmPattern + "/" + paddingType);
         //5.初始化密码器，第一个参数为加密(Encrypt_mode)或者解密解密(Decrypt_mode)操作，第二个参数为使用的KEY
@@ -180,6 +182,18 @@ public class AesUtils {
      */
     public static String aesDecode(String secretKey,String cipherText) throws Exception{
         return aesDecode(secretKey,cipherText,AlgorithmPatternEnum.ECB.getPattern(), PaddingTypeEnum.PKCS5_PADDING.getPaddingType());
+    }
+
+    /**
+     *  AES解密
+     * @param secretKey 密钥
+     * @param cipherText 密文
+     * @param aesProperties Aes配置类
+     * @return
+     * @throws Exception
+     */
+    public static String aesDecode(String secretKey,String cipherText, AesProperties aesProperties) throws Exception{
+        return aesDecode(secretKey,cipherText,aesProperties.getAlgorithmPattern(), aesProperties.getPaddingType(),aesProperties.getVector());
     }
 
 }
