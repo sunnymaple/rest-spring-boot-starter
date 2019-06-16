@@ -33,7 +33,9 @@ public enum HttpStatusEnum {
     /**
      * 不支持的请求方式，如指定了post请求，却使用get请求之后抛出的异常
      */
-    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED.value(),"不支持的请求方式！");
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED.value(),"不支持的请求方式！"),
+
+    SECURITY_VERIFY(1003,"参数签名验证异常");
 
     HttpStatusEnum(int status, String message) {
         this.status = status;

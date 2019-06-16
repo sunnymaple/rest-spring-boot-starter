@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @ConditionalOnWebApplication
-@ConditionalOnProperty(name = "response.handler.enabled",havingValue = "true",matchIfMissing = true)
+//@ConditionalOnProperty(name = "response.handler.enabled",havingValue = "true",matchIfMissing = true)
 @EnableConfigurationProperties({AppResponseHandlerProperties.class})
 @Import(AppResponseHandler.class)
 public class AppResponseHandlerAutoConfiguration {

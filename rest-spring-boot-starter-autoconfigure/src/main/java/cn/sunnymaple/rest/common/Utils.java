@@ -1,12 +1,12 @@
 package cn.sunnymaple.rest.common;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 工具类
@@ -77,5 +77,24 @@ public class Utils {
      */
     public static <T> T parseObject(String jsonStr,Class<T> tClass) throws IOException {
         return JSON.parseObject(jsonStr,tClass);
+    }
+
+    /**
+     * 通配符匹配URI
+     * @param uri 目标uri
+     * @param sources 通配符
+     * @return
+     */
+    public static boolean uriMatching(String uri, String[] sources){
+        if (!Utils.isEmpty(sources)){
+            for (String source : sources){
+                AntPathMatcher matcher = new AntPathMatcher();
+                boolean match = matcher.match(source, uri);
+                if (match){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

@@ -1,5 +1,6 @@
 package cn.sunnymaple.rest.exception;
 
+import cn.sunnymaple.rest.common.HttpStatusEnum;
 import lombok.Data;
 
 /**
@@ -38,6 +39,18 @@ public class RestException extends RuntimeException {
     public RestException(String message,Throwable e) {
         super(message,e);
         this.message = message;
+    }
+
+    public RestException(HttpStatusEnum httpStatusEnum, Throwable e) {
+        super(httpStatusEnum.getMessage(),e);
+        this.status = httpStatusEnum.getStatus();
+        this.message = httpStatusEnum.getMessage();
+    }
+
+    public RestException(HttpStatusEnum httpStatusEnum) {
+        super(httpStatusEnum.getMessage());
+        this.status = httpStatusEnum.getStatus();
+        this.message = httpStatusEnum.getMessage();
     }
 
 }
