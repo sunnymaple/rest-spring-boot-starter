@@ -85,7 +85,7 @@ public class Utils {
      * @param sources 通配符
      * @return
      */
-    public static boolean uriMatching(String uri, String[] sources){
+    public static boolean uriMatching(String uri, List<String> sources){
         if (!Utils.isEmpty(sources)){
             for (String source : sources){
                 AntPathMatcher matcher = new AntPathMatcher();

@@ -2,6 +2,13 @@ package cn.sunnymaple.rest.response;
 
 import cn.sunnymaple.rest.common.HttpStatusEnum;
 import cn.sunnymaple.rest.common.Utils;
+import cn.sunnymaple.rest.security.ArgumentsThreadLocal;
+import cn.sunnymaple.rest.security.BaseResponseBody;
+import cn.sunnymaple.rest.security.aes.AesUtils;
+import cn.sunnymaple.rest.security.property.AesProperties;
+import cn.sunnymaple.rest.security.property.RsaProperties;
+import cn.sunnymaple.rest.security.property.SecurityProperties;
+import cn.sunnymaple.rest.security.rsa.RsaUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,6 +30,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Objects;
 
@@ -42,17 +50,22 @@ public class AppResponseHandler implements ResponseBodyAdvice {
     @Autowired
     private AppResponseHandlerProperties properties;
 
+    @Override
+    public boolean supports(MethodParameter methodParameter, Class aClass) {
+        return true;
+    }
     /**
      * Response响应参数拦截规则，即可以在此方法中定义哪些接口将被AppResponseHandler拦截
      * 如果方法返回true则会调用beforeBodyWrite方法
      * @see ResponseBodyAdvice
      * @param methodParameter
-     * @param aClass
      * @return true 将被拦截，即在接口响应后会调用beforeBodyWrite方法
      *         false 不被拦截，即不调用beforeBodyWrite方法
      */
-    @Override
-    public boolean supports(MethodParameter methodParameter, Class aClass) {
+    private boolean supports(MethodParameter methodParameter){
+        if (!properties.isEnabled()){
+            return false;
+        }
         //判断类是否加上了NoResponseHandler注解，如果是则返回false
         NonResponseHandler classNoResponseHandler = methodParameter.getDeclaringClass().getAnnotation(NonResponseHandler.class);
         if (!Utils.isEmpty(classNoResponseHandler)){
@@ -78,28 +91,73 @@ public class AppResponseHandler implements ResponseBodyAdvice {
         return true;
     }
 
+    /**
+     * 响应参数是否加密
+     * @param securityProperties
+     * @return
+     */
+    private boolean resultIsSecurity(SecurityProperties securityProperties){
+        return !Utils.isEmpty(securityProperties) && securityProperties.isEnabled()
+                && !Utils.uriMatching(request.getServletPath(),securityProperties.getExcludePathPatterns());
+    }
+
     @Override
     public Object beforeBodyWrite(Object o, MethodParameter methodParameter, MediaType mediaType, Class aClass, ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse) {
         Object result = null;
+        Type returnType = o.getClass();
         try {
-            //对异常进行处理
-            HttpServletRequest request = ((ServletServerHttpRequest) serverHttpRequest).getServletRequest();
-            Object isException = request.getAttribute("isException");
-            if (!Utils.isEmpty(isException) && Objects.equals(isException.toString(),"1")){
-                //接口异常
-                String message = request.getAttribute("message").toString();
-                Integer status = Integer.parseInt(request.getAttribute("status").toString());
-                result = new RestResult(status,message);
+            SecurityProperties securityProperties = SecurityProperties.getInstance();
+            if (resultIsSecurity(securityProperties)){
+                ArgumentsThreadLocal argumentsHashTable = ArgumentsThreadLocal.getInstance();
+                String appKey = argumentsHashTable.get().getAppKey();
+                //对响应结果加密
+                o = encrypt(o,securityProperties,appKey);
+            }
+            if (supports(methodParameter)) {
+                //对异常进行处理
+                HttpServletRequest request = ((ServletServerHttpRequest) serverHttpRequest).getServletRequest();
+                Object isException = request.getAttribute("isException");
+                if (!Utils.isEmpty(isException) && Objects.equals(isException.toString(), "1")) {
+                    //接口异常
+                    String message = request.getAttribute("message").toString();
+                    Integer status = Integer.parseInt(request.getAttribute("status").toString());
+                    result = new RestResult(status, message);
+                } else {
+                    //封装统一格式的响应参数
+                    result = restResult(o, mediaType, serverHttpRequest, serverHttpResponse, aClass);
+                }
             }else {
-                //封装统一格式的响应参数
-                result = restResult(o,mediaType,serverHttpRequest,serverHttpResponse,aClass);
+                result = o;
             }
         } catch (Exception e) {
             HttpStatusEnum statusEnum = HttpStatusEnum.INTERNAL_SERVER_ERROR;
             result = new RestResult(statusEnum.getStatus(),statusEnum.getMessage());
             log.info("创建统一格式的响应数据异常！",e);
         }
+        if (returnType == String.class && result.getClass() != String.class){
+            try {
+                result = writeValueAsString(result);
+            } catch (JsonProcessingException e) { }
+        }
         return result;
+    }
+
+    /**
+     * 对响应结果对象加密
+     * @param o
+     * @return
+     */
+    private BaseResponseBody encrypt(Object o,SecurityProperties securityProperties,String appKey) throws Exception {
+        AesProperties aes = securityProperties.getAes();
+        //获取AES密钥
+        String secretKey = AesUtils.getSecretKey(aes.getSecretKeyLength());
+        //使用AES密钥对响应结果加密
+        String data = AesUtils.aesEncode(secretKey, o.toString(), aes);
+        //使用客户端公钥对AES密钥进行加密
+        RsaProperties rsa = securityProperties.getRsa();
+        String clientPublicKey = rsa.getClientPublicKey().get(appKey);
+        String cipherText = RsaUtils.publicKeyEncrypt(secretKey, clientPublicKey);
+        return new BaseResponseBody(cipherText,data);
     }
 
     /**

@@ -121,6 +121,18 @@ public class AesUtils {
      * AES加密
      * @param secretKey 密钥
      * @param plaintext 明文
+     * @param aesProperties AES配置类
+     * @return
+     * @throws Exception
+     */
+    public static String aesEncode(String secretKey,String plaintext, AesProperties aesProperties) throws Exception{
+        return aesEncode(secretKey, plaintext, aesProperties.getAlgorithmPattern(), aesProperties.getPaddingType(),aesProperties.getVector());
+    }
+
+    /**
+     * AES加密
+     * @param secretKey 密钥
+     * @param plaintext 明文
      * @param algorithmPattern 算法模式
      * @param paddingType 填充模式
      * @return

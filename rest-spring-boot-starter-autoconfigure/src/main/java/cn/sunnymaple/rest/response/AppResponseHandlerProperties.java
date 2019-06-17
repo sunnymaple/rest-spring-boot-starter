@@ -30,7 +30,7 @@ public class AppResponseHandlerProperties implements ApplicationContextAware {
      * true 启用
      * false 停用
      */
-    private boolean enabled;
+    private boolean enabled = true;
     /**
      * 定义不需要使用AppResponseHandler的接口，同@NoResponseHandler
      * 支持通配符：？ 匹配单个字符，如/demo?  则/demo1、/demo2会被匹配  而/demo12则不被匹配

@@ -28,8 +28,8 @@ public class SecurityArgumentResolver implements HandlerMethodArgumentResolver {
      */
     @Override
     public boolean supportsParameter(MethodParameter methodParameter) {
-        ArgumentsHashTable argumentsHashTable = ArgumentsHashTable.getInstance();
-        if (Utils.isEmpty(argumentsHashTable.get(Thread.currentThread()))){
+        ArgumentsThreadLocal argumentsHashTable = ArgumentsThreadLocal.getInstance();
+        if (Utils.isEmpty(argumentsHashTable.get())){
             //如果请求参数为空，则不调用resolveArgument
             return false;
         }
@@ -39,7 +39,7 @@ public class SecurityArgumentResolver implements HandlerMethodArgumentResolver {
     @Nullable
     @Override
     public Object resolveArgument(MethodParameter methodParameter, @Nullable ModelAndViewContainer modelAndViewContainer, NativeWebRequest nativeWebRequest, @Nullable WebDataBinderFactory webDataBinderFactory) throws Exception {
-        ArgumentsHashTable argumentsHashTable = ArgumentsHashTable.getInstance();
+        ArgumentsThreadLocal argumentsHashTable = ArgumentsThreadLocal.getInstance();
         //获取参数名称
         String paramName = methodParameter.getParameterName();
         //参数类型
@@ -61,7 +61,7 @@ public class SecurityArgumentResolver implements HandlerMethodArgumentResolver {
             return parseFloat(paramValue,paramName,parameterClass);
         }
         if (Utils.isEmpty(paramValue)){
-            JSONObject params = argumentsHashTable.get(Thread.currentThread()).getParams();
+            JSONObject params = argumentsHashTable.get().getParams();
             return Utils.parseObject(params.toJSONString(),(Class) parameterClass);
         }
         return Utils.parseObject(paramValue.toString(),(Class) parameterClass);

@@ -37,8 +37,8 @@ public class SecurityRequestWrapper extends HttpServletRequestWrapper {
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        ArgumentsHashTable argumentsHashTable = ArgumentsHashTable.getInstance();
-        ArgumentData argumentData = argumentsHashTable.get(Thread.currentThread());
+        ArgumentsThreadLocal argumentsHashTable = ArgumentsThreadLocal.getInstance();
+        ArgumentData argumentData = argumentsHashTable.get();
         String data = "";
         if (!Utils.isEmpty(argumentData)){
             data = argumentData.getParams().toJSONString();

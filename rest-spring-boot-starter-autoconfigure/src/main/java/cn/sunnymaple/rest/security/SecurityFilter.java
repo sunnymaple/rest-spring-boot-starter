@@ -9,6 +9,7 @@ import cn.sunnymaple.rest.security.rsa.RsaUtils;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
@@ -16,11 +17,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 
 /**
- * 安全加密的拦截器
- * 由于@RequestBody指定的参数是通过流中获取的，由于流有个特点，就是只能拿一次，为避免接口加了@RequestBody注解的参数获取不到参数
+ * 安全加密机制的过滤器
+ * 按理说解密操作在拦截器中做比较合适，但是考虑接口参数可能会使用@RequestBody，直接从流中获取参数
+ * 由于@RequestBody指定的参数是通过流中获取的，它有个特点，就是只能拿一次，为避免接口加了@RequestBody注解的参数获取不到参数
  * 该过滤器目的是将解密后的参数复制一份到流中
  * @auther: wangzb
  * @date: 2019/6/16 10:56
@@ -32,7 +35,7 @@ public class SecurityFilter implements Filter {
     /**
      * 解密或者签名异常跳转的接口
      */
-    public static final String PARAMS_DISPATCHER_PATH = "/sign/paramError?message=";
+    public static final String PARAMS_DISPATCHER_PATH = "/sign/paramError";
     /**
      * 参数签名认证异常
      */
@@ -49,7 +52,7 @@ public class SecurityFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         //判断加密接口过滤规则
-        String[] excludePathPatterns = securityProperties.getExcludePathPatterns();
+        List<String> excludePathPatterns = securityProperties.getExcludePathPatterns();
         if (!Utils.uriMatching(request.getServletPath(),excludePathPatterns)){
             HttpServletResponse response = (HttpServletResponse) servletResponse;
             //解密/签名认证
@@ -74,7 +77,12 @@ public class SecurityFilter implements Filter {
             RsaProperties rsa = securityProperties.getRsa();
             //通过key获取客户端公钥
             Map<String, String> clientPublicKeys = rsa.getClientPublicKey();
-            String clientPublicKey = clientPublicKeys.get(requestBody.getAppKey());
+            String appKey = requestBody.getAppKey();
+            String clientPublicKey = clientPublicKeys.get(appKey);
+            if (Utils.isEmpty(clientPublicKey)){
+                forward(request,response,PARAMS_DISPATCHER_PATH);
+                return;
+            }
             if (rsa.isSignatureEnable()){
                 //通过客户端公钥认证
                 boolean verify = RsaUtils.verify(requestBody.getSignParam(), clientPublicKey, requestBody.getSign());
@@ -91,9 +99,9 @@ public class SecurityFilter implements Filter {
                 String plaintext = AesUtils.aesDecode(key, data, securityProperties.getAes());
                 JSONObject plaintextJsonObject = JSONObject.parseObject(plaintext);
                 //存储参数
-                ArgumentsHashTable arguments = ArgumentsHashTable.getInstance();
-                ArgumentData argumentData = new ArgumentData(plaintextJsonObject);
-                arguments.put(Thread.currentThread(),argumentData);
+                ArgumentsThreadLocal arguments = ArgumentsThreadLocal.getInstance();
+                ArgumentData argumentData = new ArgumentData(appKey,plaintextJsonObject);
+                arguments.set(argumentData);
             }
         } catch (ParamException e){
             log.error(e.getMessage(),e);

@@ -11,9 +11,9 @@ import lombok.Data;
 @Data
 public class ArgumentData {
     /**
-     * 可以使用的次数,初始为参数的个数，userSize为0时，则该对象从ArgumentsHashTable中移除
+     * 客户端唯一识别id
      */
-    private Integer useSize;
+    private String appKey;
     /**
      * 对应接口的参数，key参数名称，value：参数值
      */
@@ -22,7 +22,8 @@ public class ArgumentData {
     public ArgumentData() {
     }
 
-    public ArgumentData(JSONObject params) {
+    public ArgumentData(String appKey, JSONObject params) {
+        this.appKey = appKey;
         this.params = params;
     }
 }
