@@ -2,6 +2,8 @@ package cn.sunnymaple.rest.response;
 
 import cn.sunnymaple.rest.common.HttpStatusEnum;
 import cn.sunnymaple.rest.common.Utils;
+import cn.sunnymaple.rest.exception.RestException;
+import cn.sunnymaple.rest.security.ArgumentData;
 import cn.sunnymaple.rest.security.ArgumentsThreadLocal;
 import cn.sunnymaple.rest.security.BaseResponseBody;
 import cn.sunnymaple.rest.security.aes.AesUtils;
@@ -109,9 +111,11 @@ public class AppResponseHandler implements ResponseBodyAdvice {
             SecurityProperties securityProperties = SecurityProperties.getInstance();
             if (resultIsSecurity(securityProperties)){
                 ArgumentsThreadLocal argumentsHashTable = ArgumentsThreadLocal.getInstance();
-                String appKey = argumentsHashTable.get().getAppKey();
-                //对响应结果加密
-                o = encrypt(o,securityProperties,appKey);
+                ArgumentData argumentData = argumentsHashTable.get();
+                if (!Utils.isEmpty(argumentData)){
+                    String appKey = argumentData.getAppKey();
+                    o = encrypt(o,securityProperties,appKey);
+                }
             }
             if (supports(methodParameter)) {
                 //对异常进行处理
@@ -147,17 +151,22 @@ public class AppResponseHandler implements ResponseBodyAdvice {
      * @param o
      * @return
      */
-    private BaseResponseBody encrypt(Object o,SecurityProperties securityProperties,String appKey) throws Exception {
-        AesProperties aes = securityProperties.getAes();
-        //获取AES密钥
-        String secretKey = AesUtils.getSecretKey(aes.getSecretKeyLength());
-        //使用AES密钥对响应结果加密
-        String data = AesUtils.aesEncode(secretKey, o.toString(), aes);
-        //使用客户端公钥对AES密钥进行加密
-        RsaProperties rsa = securityProperties.getRsa();
-        String clientPublicKey = rsa.getClientPublicKey().get(appKey);
-        String cipherText = RsaUtils.publicKeyEncrypt(secretKey, clientPublicKey);
-        return new BaseResponseBody(cipherText,data);
+    private BaseResponseBody encrypt(Object o,SecurityProperties securityProperties,String appKey) {
+        try {
+            AesProperties aes = securityProperties.getAes();
+            //获取AES密钥
+            String secretKey = AesUtils.getSecretKey(aes.getSecretKeyLength());
+            //使用AES密钥对响应结果加密
+            String data = AesUtils.aesEncode(secretKey, o.toString(), aes);
+            //使用客户端公钥对AES密钥进行加密
+            RsaProperties rsa = securityProperties.getRsa();
+            String clientPublicKey = rsa.getClientPublicKey().get(appKey);
+            String cipherText = RsaUtils.publicKeyEncrypt(secretKey, clientPublicKey);
+            return new BaseResponseBody(cipherText,data);
+        }catch (Exception e){
+            throw new RestException(e.getMessage(),e);
+        }
+
     }
 
     /**
