@@ -9,7 +9,7 @@ import lombok.Data;
  * @date 2019/6/5 11:46
  */
 @Data
-public class RestResult {
+public class RestResult implements IRestResult{
     /**
      * 响应结果的状态码,默认为200,200表示请求成功，其他为异常
      */
