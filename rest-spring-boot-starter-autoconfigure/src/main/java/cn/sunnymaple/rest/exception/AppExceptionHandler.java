@@ -60,8 +60,8 @@ public class AppExceptionHandler {
     private void printLogAndSetAttribute(Throwable e, String message,Integer status){
         //打印日志
         log.error(e.getClass().getSimpleName() + "-->" + message,e);
-        //修改http响应状态码为异常状态码status,这里根据需求定，如果后台发生异常，响应状态码和异常状态码需要一致，则打开下面一行代码
-//        request.setAttribute("javax.servlet.error.status_code",status);
+        //修改http响应状态码为异常状态码status
+        request.setAttribute("javax.servlet.error.status_code",status);
         //设置异常信息
         if (Utils.isEmpty(status)){
             status = HttpStatusEnum.INTERNAL_SERVER_ERROR.getStatus();

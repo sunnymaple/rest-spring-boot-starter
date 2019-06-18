@@ -16,7 +16,10 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -30,11 +33,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 拦截有使用@ResponseBody的接口或者在控制层加了@RestController的所有接口
@@ -44,13 +45,15 @@ import java.util.Objects;
  */
 @ControllerAdvice
 @Slf4j
-public class AppResponseHandler implements ResponseBodyAdvice {
+public class AppResponseHandler implements ResponseBodyAdvice , ApplicationContextAware {
 
     @Autowired
     private HttpServletRequest request;
 
     @Autowired
     private AppResponseHandlerProperties properties;
+
+    private IRestResultFactory restResultFactory;
 
     @Override
     public boolean supports(MethodParameter methodParameter, Class aClass) {
@@ -107,13 +110,22 @@ public class AppResponseHandler implements ResponseBodyAdvice {
     public Object beforeBodyWrite(Object o, MethodParameter methodParameter, MediaType mediaType, Class aClass, ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse) {
         Object result = null;
         Type returnType = o.getClass();
+        BeforeBodyWriteParameter beforeBodyWriteParameter =
+                new BeforeBodyWriteParameter(methodParameter,mediaType,aClass,serverHttpRequest,serverHttpResponse);
         try {
+            if (o instanceof Resource){
+                //如果o为资源文件，则直接返回
+                return o;
+            }
+            //判断是否加密
             SecurityProperties securityProperties = SecurityProperties.getInstance();
             if (resultIsSecurity(securityProperties)){
+                //对结果集进行加密，并获取AES密钥
                 ArgumentsThreadLocal argumentsHashTable = ArgumentsThreadLocal.getInstance();
                 ArgumentData argumentData = argumentsHashTable.get();
                 if (!Utils.isEmpty(argumentData)){
                     String appKey = argumentData.getAppKey();
+                    //加密
                     o = encrypt(o,securityProperties,appKey);
                 }
             }
@@ -124,26 +136,22 @@ public class AppResponseHandler implements ResponseBodyAdvice {
                 if (!Utils.isEmpty(isException) && Objects.equals(isException.toString(), "1")) {
                     //接口异常
                     String message = request.getAttribute("message").toString();
-                    Integer status = Integer.parseInt(request.getAttribute("status").toString());
-                    result = new RestResult(status, message);
+                    Integer status = Integer.valueOf(request.getAttribute("status").toString());
+                    result = restResultFactory.failure(message,status,beforeBodyWriteParameter);
                 } else {
                     //封装统一格式的响应参数
-                    result = restResult(o, mediaType, serverHttpRequest, serverHttpResponse, aClass);
+                    result = restResultFactory.success(o,beforeBodyWriteParameter);
                 }
             }else {
+                //没有启用Response或者使用了@NonResponseHandler注解，直接返回结果对象
                 result = o;
             }
         } catch (Exception e) {
             HttpStatusEnum statusEnum = HttpStatusEnum.INTERNAL_SERVER_ERROR;
-            result = new RestResult(statusEnum.getStatus(),statusEnum.getMessage());
+            result = restResultFactory.failure(statusEnum.getMessage(),statusEnum.getStatus(),beforeBodyWriteParameter);
             log.info("创建统一格式的响应数据异常！",e);
         }
-        if (returnType == String.class && result.getClass() != String.class){
-            try {
-                result = writeValueAsString(result);
-            } catch (JsonProcessingException e) { }
-        }
-        return result;
+        return writeValueAsString(result,returnType);
     }
 
     /**
@@ -166,99 +174,29 @@ public class AppResponseHandler implements ResponseBodyAdvice {
         }catch (Exception e){
             throw new RestException(e.getMessage(),e);
         }
-
     }
 
     /**
      * 将对象转json字符串，并序列化
      * 支持实体类对象、Map集合、Collection集合
-     * @param obj 目标对象
+     * @param result 目标对象
      * @return
      * @throws JsonProcessingException
      */
-    private static String writeValueAsString(Object obj) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(obj);
-    }
-
-    /**
-     * 判断返回结果是否为application/json形式
-     * @param mediaType
-     * @return
-     */
-    private boolean isJsonResponse(MediaType mediaType){
-        return Objects.equals(mediaType.toString(),"application/json");
-    }
-
-    /**
-     * 将响应对象o封装为RestResult对象
-     * @param o
-     * @param mediaType
-     * @param serverHttpRequest
-     * @param serverHttpResponse
-     * @param aClass
-     * @return
-     * @throws IOException
-     */
-    private Object restResult(Object o,MediaType mediaType,ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse,Class aClass) throws IOException {
-        /*
-         * 1:判断是否为null
-         */
-        if (o == null){
-            RestResult restResult = RestResult.factory();
-            if (isJsonResponse(mediaType) && StringHttpMessageConverter.class == aClass){
-                return JSONObject.toJSONString(restResult, SerializerFeature.WriteMapNullValue);
-            }
-            return restResult;
-        }
-        /*
-         * 2、对于响应的是Resource资源对象（如：文件下载），则直接返回Object对象
-         * 对于响应对象本身就是RestResult对象，则不再次封装，直接返回
-         */
-        if (o instanceof Resource || o instanceof RestResult){
-            return o;
-        }
-        /*
-         * 3、判断是否返回的是Map
-         *   如果是：判断请求状态码，如果状态码为非200,则说明请求失败，则获取错误信息RestResult
-         */
-        int successCode = HttpStatusEnum.OK.getStatus();
-        if (o instanceof Map){
-            HttpServletResponse response =  ((ServletServerHttpResponse) serverHttpResponse).getServletResponse();
-            Integer status = response.getStatus();
-            if (!Objects.equals(status, successCode)){
-                HttpServletRequest request = ((ServletServerHttpRequest) serverHttpRequest).getServletRequest();
-                RestResult restResult = (RestResult) request.getAttribute("result");
-                if (!Utils.isEmpty(restResult)){
-                    return restResult;
-                }else {
-                    Map<String,Object> error = (Map<String, Object>) o;
-                    return Utils.map2Object(error, RestResult.class);
-                }
-            }else {
-                return RestResult.factory(o);
-            }
-        }
-        if (o instanceof String){
-            /* 按道理 只要API 返回值是 String / byte[]等
-             *  不会由MappingJackson2HttpMessageConverter处理的返回值
-             * 都有可能出错，抛出ClassCastException...
-             * 目前API 出现的比较多的是String，所以只处理String情况
-             * 如果 API返回的是 String，
-             */
+    private static Object writeValueAsString(Object result, Type returnType) {
+        if (returnType == String.class){
+            ObjectMapper mapper = new ObjectMapper();
             try {
-                /*
-                 *  String返回值 将被StringHttpMessageConverter处理，
-                 *  所以此时应该返回RestResult的json序列化后的字符串
-                 *  如果此时还是返回RestResult对象，会抛出ClassCastException
-                 *  因为StringHttpMessageConverter会把RestResult对象当做String处理
-                 */
-                return writeValueAsString(RestResult.factory(o));
-            }catch (JsonProcessingException e) {
-                log.warn("json serialize error", e);
-                return o;
-            }
+                return mapper.writeValueAsString(result);
+            } catch (JsonProcessingException e) { }
         }
-        return RestResult.factory(o);
+        return result;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        IRestResultFactory restResultFactory = applicationContext.getBean(IRestResultFactory.class);
+        Optional<IRestResultFactory> op = Optional.ofNullable(restResultFactory);
+        this.restResultFactory = op.orElse(new DefaultRestResultFactory());
     }
 }

@@ -6,5 +6,4 @@ package cn.sunnymaple.rest.response;
  * @date 2019/6/18 9:53
  */
 public interface IRestResult {
-
 }

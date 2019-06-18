@@ -9,7 +9,7 @@ import lombok.Data;
  * @date 2019/6/5 11:46
  */
 @Data
-public class RestResult implements IRestResult{
+public class DefaultRestResult implements IRestResult{
     /**
      * 响应结果的状态码,默认为200,200表示请求成功，其他为异常
      */
@@ -27,42 +27,26 @@ public class RestResult implements IRestResult{
      */
     private long timestamp = System.currentTimeMillis();
 
-    public RestResult() {
+    public DefaultRestResult() {
     }
 
-    public RestResult(Integer status, String message, Object result) {
+    public DefaultRestResult(Integer status, String message, Object result) {
         this.status = status;
         this.message = message;
         this.result = result;
     }
 
-    public RestResult(Integer status, String message) {
+    public DefaultRestResult(Integer status, String message) {
         this.status = status;
         this.message = message;
     }
 
-    public RestResult(String message, Object result) {
+    public DefaultRestResult(String message, Object result) {
         this.message = message;
         this.result = result;
     }
 
-    public RestResult(Object result) {
+    public DefaultRestResult(Object result) {
         this.result = result;
-    }
-
-    /**
-     * result为null
-     * @return
-     */
-    public static RestResult factory(){
-        return new RestResult(HttpStatusEnum.OK.getMessage(),null);
-    }
-
-    /**
-     * result为null
-     * @return
-     */
-    public static RestResult factory(Object result){
-        return new RestResult(HttpStatusEnum.OK.getMessage(),result);
     }
 }
