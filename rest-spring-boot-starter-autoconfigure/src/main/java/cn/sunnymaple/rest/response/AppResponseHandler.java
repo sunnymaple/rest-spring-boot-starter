@@ -11,23 +11,16 @@ import cn.sunnymaple.rest.security.property.AesProperties;
 import cn.sunnymaple.rest.security.property.RsaProperties;
 import cn.sunnymaple.rest.security.property.SecurityProperties;
 import cn.sunnymaple.rest.security.rsa.RsaUtils;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
-import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
@@ -45,7 +38,7 @@ import java.util.Optional;
  */
 @ControllerAdvice
 @Slf4j
-public class AppResponseHandler implements ResponseBodyAdvice , ApplicationContextAware {
+public class AppResponseHandler implements ResponseBodyAdvice {
 
     @Autowired
     private HttpServletRequest request;
@@ -53,6 +46,7 @@ public class AppResponseHandler implements ResponseBodyAdvice , ApplicationConte
     @Autowired
     private AppResponseHandlerProperties properties;
 
+    @Autowired
     private IRestResultFactory restResultFactory;
 
     @Override
@@ -191,12 +185,5 @@ public class AppResponseHandler implements ResponseBodyAdvice , ApplicationConte
             } catch (JsonProcessingException e) { }
         }
         return result;
-    }
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        IRestResultFactory restResultFactory = applicationContext.getBean(IRestResultFactory.class);
-        Optional<IRestResultFactory> op = Optional.ofNullable(restResultFactory);
-        this.restResultFactory = op.orElse(new DefaultRestResultFactory());
     }
 }

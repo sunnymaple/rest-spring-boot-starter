@@ -1,8 +1,10 @@
 package cn.sunnymaple.rest.exception;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -15,6 +17,16 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnWebApplication
 @ConditionalOnProperty(name = "exception.handler.enabled",havingValue = "true",matchIfMissing = true)
 @EnableConfigurationProperties(AppExceptionHandlerProperties.class)
-@Import({AppExceptionHandler.class,BasicRestExceptionController.class})
+@Import({BasicRestExceptionController.class})
 public class AppExceptionHandlerAutoConfiguration {
+
+    /**
+     * 将异常处理类添加到spring容器中
+     * @return
+     */
+    @ConditionalOnMissingBean
+    @Bean
+    public AppExceptionHandler appExceptionHandler(){
+        return new AppExceptionHandler();
+    }
 }

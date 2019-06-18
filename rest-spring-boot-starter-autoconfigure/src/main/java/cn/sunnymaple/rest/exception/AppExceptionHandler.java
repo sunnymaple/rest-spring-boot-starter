@@ -39,16 +39,16 @@ public class AppExceptionHandler {
     /**
      * 定义异常处理接口
      */
-    private static final String FORWARD_EXCEPTION_URI = "/restException";
+    protected static final String FORWARD_EXCEPTION_URI = "/restException";
 
     @Autowired
-    private HttpServletRequest request;
+    protected HttpServletRequest request;
 
     /**
      * SpringBoot定义的异常处理接口 {@link BasicErrorController}
      */
     @Value("${server.error.path:${error.path:/error}}")
-    private String errorPath;
+    protected String errorPath;
 
 
     /**
@@ -57,7 +57,7 @@ public class AppExceptionHandler {
      * @param message 异常message
      * @param status 错误状态码
      */
-    private void printLogAndSetAttribute(Throwable e, String message,Integer status){
+    protected void printLogAndSetAttribute(Throwable e, String message,Integer status){
         //打印日志
         log.error(e.getClass().getSimpleName() + "-->" + message,e);
         //修改http响应状态码为异常状态码status
@@ -181,7 +181,7 @@ public class AppExceptionHandler {
      * @param handlerMethod
      * @return
      */
-    private String forward(HandlerMethod handlerMethod){
+    protected String forward(HandlerMethod handlerMethod){
         return isResponseBody(handlerMethod) ? ("forward:" + FORWARD_EXCEPTION_URI) : ("forward:" + errorPath);
     }
 
@@ -190,7 +190,7 @@ public class AppExceptionHandler {
      * @param handlerMethod
      * @return
      */
-    private boolean isResponseBody(HandlerMethod handlerMethod){
+    protected boolean isResponseBody(HandlerMethod handlerMethod){
         //判断是否使用了responseHandler
         AppResponseHandlerProperties properties = AppResponseHandlerProperties.getInstance();
         if (Utils.isEmpty(properties) || !properties.isEnabled()){
