@@ -113,8 +113,8 @@ public class AesUtils {
         byte [] byteAes = cipher.doFinal(byteEncode);
         //将加密后的数据转换为字符串
         String result = new BASE64Encoder().encode(byteAes);
-        //11.将字符串返回
-        return result;
+        //由于base64的字节长度最多为74，所以超过74个字符后会加上/r/n的换行符
+        return result.replaceAll("[\\s*\t\n\r]","");
     }
 
     /**
