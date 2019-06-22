@@ -102,15 +102,15 @@ public class AppResponseHandler implements ResponseBodyAdvice {
 
     @Override
     public Object beforeBodyWrite(Object o, MethodParameter methodParameter, MediaType mediaType, Class aClass, ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse) {
+        if (o instanceof Resource){
+            //如果o为资源文件，则直接返回
+            return o;
+        }
         Object result = null;
         Type returnType = o.getClass();
         BeforeBodyWriteParameter beforeBodyWriteParameter =
                 new BeforeBodyWriteParameter(methodParameter,mediaType,aClass,serverHttpRequest,serverHttpResponse);
         try {
-            if (o instanceof Resource){
-                //如果o为资源文件，则直接返回
-                return o;
-            }
             //判断是否加密
             SecurityProperties securityProperties = SecurityProperties.getInstance();
             if (resultIsSecurity(securityProperties)){

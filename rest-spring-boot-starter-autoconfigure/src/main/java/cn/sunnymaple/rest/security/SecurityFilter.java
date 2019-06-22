@@ -56,10 +56,19 @@ public class SecurityFilter implements Filter {
         if (!Utils.uriMatching(request.getServletPath(),excludePathPatterns)){
             HttpServletResponse response = (HttpServletResponse) servletResponse;
             //解密/签名认证
-            decode(request,response);
-            // 这里将原始request传入，将解密后的参数复制一份到流中
-            ServletRequest requestWrapper = new SecurityRequestWrapper(request);
-            chain.doFilter(requestWrapper, servletResponse);
+            try {
+                decode(request,response);
+                // 这里将原始request传入，将解密后的参数复制一份到流中
+                ServletRequest requestWrapper = new SecurityRequestWrapper(request);
+                chain.doFilter(requestWrapper, servletResponse);
+            }catch (ParamException e){
+//                ServletRequest requestWrapper = new SecurityRequestWrapper(request,response,PARAMS_DISPATCHER_PATH);
+//                chain.doFilter(requestWrapper, servletResponse);
+                throw e;
+            }catch (Exception e){
+                ServletRequest requestWrapper = new SecurityRequestWrapper(request,response,SYSTEM_DISPATCHER_PATH);
+                chain.doFilter(requestWrapper, servletResponse);
+            }
         }else {
             chain.doFilter(servletRequest, servletResponse);
         }
@@ -70,8 +79,8 @@ public class SecurityFilter implements Filter {
      * @param request
      * @param response
      */
-    private void decode(HttpServletRequest request,HttpServletResponse response){
-        try {
+    private void decode(HttpServletRequest request,HttpServletResponse response) throws Exception {
+//        try {
             //获取请求参数
             BaseRequestBody requestBody = getRequestBody(request);
             RsaProperties rsa = securityProperties.getRsa();
@@ -80,8 +89,9 @@ public class SecurityFilter implements Filter {
             String appKey = requestBody.getAppKey();
             String clientPublicKey = clientPublicKeys.get(appKey);
             if (Utils.isEmpty(clientPublicKey)){
-                forward(request,response,PARAMS_DISPATCHER_PATH);
-                return;
+//                forward(request,response,PARAMS_DISPATCHER_PATH);
+//                return;
+                throw new ParamException("不合法的appKey！");
             }
             if (rsa.isSignatureEnable()){
                 //通过客户端公钥认证
@@ -103,13 +113,13 @@ public class SecurityFilter implements Filter {
                 ArgumentData argumentData = new ArgumentData(appKey,plaintextJsonObject);
                 arguments.set(argumentData);
             }
-        } catch (ParamException e){
-            log.error(e.getMessage(),e);
-            forward(request,response,PARAMS_DISPATCHER_PATH);
-        } catch (Exception e) {
-            log.error(e.getMessage(),e);
-            forward(request,response,SYSTEM_DISPATCHER_PATH);
-        }
+//        } /*catch (ParamException e){
+//            log.error(e.getMessage(),e);
+//            forward(request,response,PARAMS_DISPATCHER_PATH);
+//        }*/ catch (Exception e) {
+//            log.error(e.getMessage(),e);
+//            forward(request,response,SYSTEM_DISPATCHER_PATH);
+//        }
     }
 
     /**

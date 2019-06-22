@@ -34,7 +34,7 @@ public class SecurityController {
      * 参数异常
      * @param message
      */
-    @RequestMapping(value = "/sign/paramError?message=")
+    @RequestMapping(value = "/sign/paramError")
     public void paramError(String message){
         throw new ParamException(message);
     }

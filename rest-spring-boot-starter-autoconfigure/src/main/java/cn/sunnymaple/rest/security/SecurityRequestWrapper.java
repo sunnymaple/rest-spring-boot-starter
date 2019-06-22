@@ -8,6 +8,7 @@ import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
@@ -26,6 +27,23 @@ public class SecurityRequestWrapper extends HttpServletRequestWrapper {
      * @param request The request to wrap
      * @throws IllegalArgumentException if the request is null
      */
+    public SecurityRequestWrapper(HttpServletRequest request,HttpServletResponse response,String uri) {
+        super(request);
+        forward(request,response,uri);
+    }
+
+    /**
+     * 转发
+     * @param request
+     * @param response
+     * @param uri
+     */
+    private void forward(HttpServletRequest request, HttpServletResponse response, String uri){
+        try {
+            request.getRequestDispatcher(uri).forward(request,response);
+        } catch (Exception e1) {}
+    }
+
     public SecurityRequestWrapper(HttpServletRequest request) {
         super(request);
     }
